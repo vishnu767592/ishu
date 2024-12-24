@@ -1,0 +1,143 @@
+Create a directory for the project:
+
+bash
+Copy code
+mkdir flask-api
+cd flask-api
+Inside the directory, create a file named app.py:
+
+python
+Copy code
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Welcome to the Flask API!"})
+
+@app.route('/api/data')
+def get_data():
+    return jsonify({"data": "Here is some data."})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+Create a requirements.txt file for the dependencies:
+
+plaintext
+Copy code
+flask
+Step 2: Containerize the Flask App
+Create a Dockerfile in the same directory:
+Dockerfile
+Copy code
+# Use Python as the base image
+FROM python:3.9-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the application files
+COPY . .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose the application port
+EXPOSE 5000
+
+# Run the Flask app
+CMD ["python", "app.py"]
+Step 3: Build the Docker Image
+Build the Docker image:
+
+bash
+Copy code
+docker build -t your-dockerhub-username/flask-api:latest .
+Verify the image is created:
+
+bash
+Copy code
+docker images
+Step 4: Push the Image to Docker Hub
+Log in to Docker Hub:
+
+bash
+Copy code
+docker login
+Push the image to Docker Hub:
+
+bash
+Copy code
+docker push your-dockerhub-username/flask-api:latest
+Step 5: Create Kubernetes Manifests
+Create a deployment.yaml file for the Flask app:
+
+yaml
+Copy code
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-api-deployment
+  labels:
+    app: flask-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-api
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      containers:
+      - name: flask-api
+        image: your-dockerhub-username/flask-api:latest
+        ports:
+        - containerPort: 5000
+Create a service.yaml file to expose the application:
+
+yaml
+Copy code
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-api-service
+spec:
+  type: NodePort
+  selector:
+    app: flask-api
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+    nodePort: 30007
+Step 6: Apply the Manifests and Deploy the Application
+Start a Kubernetes cluster (e.g., using minikube or a cloud provider).
+
+bash
+Copy code
+minikube start
+Apply the manifests:
+
+bash
+Copy code
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+Verify the deployment:
+
+bash
+Copy code
+kubectl get pods
+kubectl get svc
+Step 7: Access the API via NodePort
+Get the cluster's IP:
+bash
+Copy code
+minikube ip
+Access the API using the NodePort and cluster IP:
+bash
+Copy code
+http://<minikube-ip>:30007/
+http://<minikube-ip>:30007/api/data
